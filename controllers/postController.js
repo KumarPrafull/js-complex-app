@@ -19,7 +19,7 @@ exports.create = function(req, res){
 exports.viewSingle = async function(req, res){
   try {
     let post = await Post.findSingleById(req.params.id, req.visitorId)
-    res.render('single-post-screen', {post: post})
+    res.render('single-post-screen', {post: post, title: post.title})
   } catch {
     res.render('404')
   }
@@ -77,5 +77,13 @@ exports.delete = function(req, res){
   }).catch(()=>{
     req.flash("errors", "You do not have permission to perform that action.")
     req.session.save(()=>res.redirect('/'))
+  })
+}
+
+exports.search = function(req, res){
+  Post.search(req.body.searchTerm).then(posts=>{
+    res.json(posts)
+  }).catch(()=>{
+    res.json([])
   })
 }

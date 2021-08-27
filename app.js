@@ -21,7 +21,7 @@ app.use(flash())
 app.use(function(req, res, next){
   //make our markdown function available withing ejs templates
   res.locals.filterUserHTML = function(content) {
-    return sanitizeHTML(markdown(content), {allowedTags:['p', 'br', 'ul', 'ol', 'li', 'strong', 'bold', 'i', 'em', 'h1', 'h2', 'h3', 'h4','h5','h6'], allowedAttributes:[]})
+    return sanitizeHTML(markdown(content), {allowedTags:['p', 'br', 'ul', 'ol', 'li', 'strong', 'bold', 'i', 'em', 'h1', 'h2', 'h3', 'h4','h5','h6', 'a'], allowedAttributes:[]})
   }
   //make all error and success message available from all templates
   res.locals.errors = req.flash("errors")
@@ -46,4 +46,23 @@ app.use(express.static('public'))
 
 app.use('/', router)
 
-module.exports = app
+const server = require('http').createServer(app)
+const io = require('socket.io')(server)
+
+io.use(function(socket, next){
+  sessionOptions(socket.request, socket.request.res, next)
+})
+
+io.on('connection', function(socket){
+  if(socket.request.session.user){
+    let user = socket.request.session.user
+
+    socket.emit('welcome', {username: user.username, avatar: user.avatar})
+
+    socket.on('ChatMessageFromBrowser', function(data){
+      socket.broadcast.emit('chatMessageFromServer', {message: sanitizeHTML(data.message, {allowedTags: [], allowedAttributes: {}}), username: user.username, avatar: user.avatar})
+    })
+  }
+})
+
+module.exports = server
