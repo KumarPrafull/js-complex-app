@@ -11,9 +11,14 @@ exports.create = function(req, res){
   post.create().then(function(newId) {
     sendgrid.send({
       to:'eprafull@gmail.com',
-      from:'hello@shortstories.com',
+      from:'test@test.com',
       subject: 'Congrats on creating new post',
       html: 'You did a <strong>Great</strong> job.'
+    }).then(()=>{}, error =>{
+      console.error(error);
+      if (error.response){
+        console.error(error.response.body);
+      }
     })
     req.flash("success", "New post successfully created.")
     req.session.save(()=>res.redirect(`/post/${newId}`))
